@@ -66,7 +66,21 @@
             "tool_uses": [
               {
                 "name": "read_team_context",
-                "args": {}
+                "args": {
+                  "keys": ["pm_context", "code_context", "project_health_context"]
+                }
+              },
+              {
+                "name": "transfer_to_agent",
+                "args": {
+                  "agent_name": "pm_agent"
+                }
+              },
+              {
+                "name": "transfer_to_agent",
+                "args": {
+                  "agent_name": "swarm_hq_agent"
+                }
               }
             ],
             "intermediate_responses": []

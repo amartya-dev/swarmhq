@@ -42,5 +42,4 @@ async def test_swarmhq_agent_evals() -> None:
         agent_module="swarm_hq_agent",
         eval_dataset_file_path_or_dir=EVAL_FILE,
         num_runs=1,
-        config_file_path=CONFIG_FILE,
     )
