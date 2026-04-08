@@ -5,7 +5,7 @@ from google.adk.tools.mcp_tool import McpToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams
 from mcp import StdioServerParameters
 
-repo_root = Path(__file__).resolve().parents[2]
+repo_root = Path(__file__).resolve().parents[1]
 default_bin = repo_root / "bin" / "github-mcp-server"
 
 github_mcp_command = os.getenv("GITHUB_MCP_COMMAND", str(default_bin))

@@ -1,0 +1,96 @@
+{
+  "eval_set_id": "swarmhq_eval",
+  "name": "SwarmHQ Agent Evaluation",
+  "description": "Evaluation suite covering scope guardrail enforcement and coordinator delegation with mocked GitHub tools.",
+  "eval_cases": [
+    {
+      "eval_id": "out_of_scope_blocked",
+      "session_input": {
+        "app_name": "swarm_hq_agent",
+        "user_id": "eval_user_1",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1_out_of_scope",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Recommend a good Italian restaurant near me."
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I can only help with project progress, planning new features, or scoping bugs/problems."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "intermediate_responses": []
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "project_status_smoke",
+      "session_input": {
+        "app_name": "swarm_hq_agent",
+        "user_id": "eval_user_2",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "turn_1_project_status",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "What is the current project status?"
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "SwarmHQ v1 is in progress. Deploy to Cloud Run and CI/CD pipeline are open. GitHub MCP integration and root agent implementation are complete."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "read_team_context",
+                "args": {
+                  "keys": ["pm_context", "code_context"]
+                }
+              },
+              {
+                "name": "transfer_to_agent",
+                "args": {
+                  "agent_name": "pm_agent"
+                }
+              },
+              {
+                "name": "projects_list",
+                "args": {}
+              },
+              {
+                "name": "transfer_to_agent",
+                "args": {
+                  "agent_name": "swarm_hq_agent"
+                }
+              }
+            ],
+            "intermediate_responses": []
+          }
+        }
+      ]
+    }
+  ]
+}
