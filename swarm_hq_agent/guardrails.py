@@ -206,6 +206,18 @@ def github_scope_guardrail_before_tool(
                 }
             return None
 
+        # Risk agent: read-only, same write-blocking as code agent.
+        if agent_mode == "risk":
+            if tool_name.startswith(_WRITE_TOOL_NAME_HINTS):
+                return {
+                    "status": "error",
+                    "error_message": (
+                        "Blocked: the project health agent is read-only and cannot perform write operations."
+                    ),
+                }
+            return None
+
+        # PM agent: allow only projects/issues-centric tools (+ safe reads).
         if agent_mode == "pm":
             if tool_name.startswith(allowed_pm_prefixes):
                 return None
