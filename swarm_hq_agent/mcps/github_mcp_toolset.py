@@ -81,7 +81,7 @@ github_code_tools = [
     )
 ]
 
-# Risk-analyst toolset: read-only, adds pull_requests for stale PR / review analysis.
+# Project Health Agent toolset: read-only, adds pull_requests for stale PR / review analysis.
 github_risk_tools = [
     _mcp_toolset(
         args=[
