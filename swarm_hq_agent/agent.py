@@ -2,8 +2,11 @@ import os
 
 from google.adk.agents.llm_agent import LlmAgent
 
-from .mcps.github_mcp_toolset import github_code_tools
-from .mcps.github_mcp_toolset import github_pm_tools
+if os.getenv("SWARMHQ_TEST_MODE"):
+    from .mcps.mock_github_toolset import github_code_tools, github_pm_tools
+else:
+    from .mcps.github_mcp_toolset import github_code_tools, github_pm_tools
+
 from .state_tools import read_team_context
 
 ORG_OWNER = os.getenv("SWARMHQ_ORG_OWNER", "swarmhq-demo").strip() or "swarmhq-demo"
