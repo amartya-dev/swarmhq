@@ -14,7 +14,7 @@ jobs:
   # ---------------------------------------------------------------------------
   # test — runs on every PR and push to main
   # GitHub tools are stubbed (SWARMHQ_TEST_MODE=1).
-  # Only needs GOOGLE_API_KEY — no GCP/WIF auth required.
+  # Uses the same GCP SA key as deploy → Vertex AI, no free-tier quota limits.
   # ---------------------------------------------------------------------------
   test:
     name: Integration tests
@@ -23,6 +23,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (Service Account Key)
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v5
@@ -35,13 +40,17 @@ jobs:
       - name: Run ADK eval tests (mocked GitHub tools)
         env:
           SWARMHQ_TEST_MODE: "1"
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GOOGLE_GENAI_USE_VERTEXAI: "1"
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT }}
+          GOOGLE_CLOUD_LOCATION: ${{ secrets.GCP_REGION }}
           SWARMHQ_ORG_OWNER: ${{ secrets.SWARMHQ_ORG_OWNER }}
         run: uv run pytest tests/ -v
 
   # ---------------------------------------------------------------------------
   # deploy — runs only on push to main after tests pass
-  # Downloads real Linux binary; authenticates to GCP via Workload Identity.
+  # Downloads real Linux binary; authenticates to GCP via service account key.
+  # Cloud SQL session persistence is optional: skipped if CLOUDSQL_CONN_NAME
+  # is not configured.
   # ---------------------------------------------------------------------------
   deploy:
     name: Deploy to Cloud Run
@@ -84,24 +93,33 @@ jobs:
           cp /tmp/github-mcp-server swarm_hq_agent/bin/github-mcp-server
           chmod +x swarm_hq_agent/bin/github-mcp-server
 
-      - name: Fetch Cloud SQL DB password from Secret Manager
-        id: cloudsql_pwd
-        run: |
-          PWD="$(gcloud secrets versions access latest \
-            --secret=CLOUDSQL_DB_PASSWORD \
-            --project=${{ secrets.GCP_PROJECT }})"
-          echo "::add-mask::$PWD"
-          echo "value=$PWD" >> "$GITHUB_OUTPUT"
-
       - name: Deploy to Cloud Run
         env:
           GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT }}
           GOOGLE_CLOUD_LOCATION: ${{ secrets.GCP_REGION }}
+          RUNTIME_SA_EMAIL: ${{ secrets.RUNTIME_SA_EMAIL }}
+          CLOUDSQL_CONN_NAME: ${{ secrets.CLOUDSQL_CONN_NAME }}
+          CLOUDSQL_DB_PASSWORD: ${{ secrets.CLOUDSQL_DB_PASSWORD }}
+          SWARMHQ_ORG_OWNER: ${{ secrets.SWARMHQ_ORG_OWNER }}
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          CLOUDSQL_USER="adk"
-          CLOUDSQL_DB="adk_sessions"
-          CLOUDSQL_CONN_NAME="${{ secrets.CLOUDSQL_CONN_NAME }}"
-          ADK_SESSION_SERVICE_URI="postgresql+asyncpg://${CLOUDSQL_USER}:${{ steps.cloudsql_pwd.outputs.value }}@/${CLOUDSQL_DB}?host=/cloudsql/${CLOUDSQL_CONN_NAME}"
+          # Build optional flags conditionally to avoid passing empty values
+          EXTRA_FLAGS=()
+
+          if [[ -n "$RUNTIME_SA_EMAIL" ]]; then
+            EXTRA_FLAGS+=(--service-account="$RUNTIME_SA_EMAIL")
+          fi
+
+          # Cloud SQL session persistence (optional)
+          SESSION_URI_FLAG=()
+          if [[ -n "$CLOUDSQL_CONN_NAME" && -n "$CLOUDSQL_DB_PASSWORD" ]]; then
+            ADK_SESSION_SERVICE_URI="postgresql+asyncpg://adk:${CLOUDSQL_DB_PASSWORD}@/adk_sessions?host=/cloudsql/${CLOUDSQL_CONN_NAME}"
+            SESSION_URI_FLAG+=(--session_service_uri "$ADK_SESSION_SERVICE_URI")
+            EXTRA_FLAGS+=(--add-cloudsql-instances="$CLOUDSQL_CONN_NAME")
+          fi
+
+          # Secrets to inject into Cloud Run (GH PAT required)
+          SET_SECRETS="GITHUB_PERSONAL_ACCESS_TOKEN=GITHUB_PERSONAL_ACCESS_TOKEN:latest"
 
           uv run adk deploy cloud_run \
             --project "$GOOGLE_CLOUD_PROJECT" \
@@ -109,7 +127,7 @@ jobs:
             --service_name "swarmhq" \
             --with_ui \
             --allow_origins "*" \
-            --session_service_uri "$ADK_SESSION_SERVICE_URI" \
+            "${SESSION_URI_FLAG[@]}" \
             swarm_hq_agent \
             -- \
             --allow-unauthenticated \
@@ -117,7 +135,6 @@ jobs:
             --concurrency=1 \
             --min-instances=1 \
             --timeout=120 \
-            --service-account="${{ secrets.RUNTIME_SA_EMAIL }}" \
-            --add-cloudsql-instances="$CLOUDSQL_CONN_NAME" \
-            --set-secrets="GITHUB_PERSONAL_ACCESS_TOKEN=GITHUB_PERSONAL_ACCESS_TOKEN:latest" \
-            --set-env-vars="SWARMHQ_ORG_OWNER=${{ secrets.SWARMHQ_ORG_OWNER }},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT,GOOGLE_CLOUD_LOCATION=$GOOGLE_CLOUD_LOCATION"
+            "${EXTRA_FLAGS[@]}" \
+            --set-secrets="$SET_SECRETS" \
+            --set-env-vars="SWARMHQ_ORG_OWNER=${SWARMHQ_ORG_OWNER},GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION}"
