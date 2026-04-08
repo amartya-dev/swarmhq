@@ -75,32 +75,6 @@
                 "args": {
                   "agent_name": "pm_agent"
                 }
-              },
-              {
-                "name": "projects_list",
-                "args": {}
-              },
-              {
-                "name": "transfer_to_agent",
-                "args": {
-                  "agent_name": "swarm_hq_agent"
-                }
-              },
-              {
-                "name": "transfer_to_agent",
-                "args": {
-                  "agent_name": "project_health_agent"
-                }
-              },
-              {
-                "name": "search_repositories",
-                "args": {}
-              },
-              {
-                "name": "transfer_to_agent",
-                "args": {
-                  "agent_name": "swarm_hq_agent"
-                }
               }
             ],
             "intermediate_responses": []
