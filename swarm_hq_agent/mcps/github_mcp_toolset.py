@@ -5,7 +5,7 @@ from google.adk.tools.mcp_tool import McpToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams
 from mcp import StdioServerParameters
 
-repo_root = Path(__file__).resolve().parents[1]
+repo_root = Path(__file__).resolve().parents[2]
 default_bin = repo_root / "bin" / "github-mcp-server"
 
 github_mcp_command = os.getenv("GITHUB_MCP_COMMAND", str(default_bin))
@@ -76,6 +76,19 @@ github_code_tools = [
             "--read-only",
             "--toolsets",
             "context,repos,git,users",
+            *(["--insiders"] if _insiders else []),
+        ]
+    )
+]
+
+# Project Health Agent toolset: read-only, adds pull_requests for stale PR / review analysis.
+github_risk_tools = [
+    _mcp_toolset(
+        args=[
+            "stdio",
+            "--read-only",
+            "--toolsets",
+            "context,repos,git,users,pull_requests,issues",
             *(["--insiders"] if _insiders else []),
         ]
     )

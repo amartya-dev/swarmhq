@@ -207,6 +207,20 @@ def get_teams(**kwargs: Any) -> str:
     return json.dumps([{"name": "engineering", "slug": "engineering", "privacy": "closed"}])
 
 
+def list_pull_requests(**kwargs: Any) -> str:
+    return json.dumps([
+        {
+            "number": 27,
+            "title": "Refactor auth module",
+            "state": "open",
+            "user": {"login": "anmolgaur45"},
+            "created_at": "2025-01-01T10:00:00Z",
+            "updated_at": "2025-01-01T10:00:00Z",
+            "url": "https://github.com/swarmhq-demo/tiny-blog/pull/27",
+        }
+    ])
+
+
 # ---------------------------------------------------------------------------
 # Exported tool lists (drop-in replacements for real McpToolset lists)
 # ---------------------------------------------------------------------------
@@ -225,6 +239,14 @@ github_code_tools: list[FunctionTool] = [
     FunctionTool(func=search_repositories),
     FunctionTool(func=get_file_contents),
     FunctionTool(func=get_repository_tree),
+    FunctionTool(func=list_branches),
+    FunctionTool(func=get_me),
+]
+
+github_risk_tools: list[FunctionTool] = [
+    FunctionTool(func=search_repositories),
+    FunctionTool(func=list_pull_requests),
+    FunctionTool(func=list_issues),
     FunctionTool(func=list_branches),
     FunctionTool(func=get_me),
 ]

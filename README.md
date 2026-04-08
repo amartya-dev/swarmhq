@@ -11,8 +11,13 @@ Hard scope: it will refuse requests outside those categories.
 - **Coordinator**: `swarm_hq_agent` (exec-facing)
 - **Product Manager specialist**: Projects + Issues (writes allowed)
 - **Code Analyzer specialist**: org-wide repo/code analysis (read-only)
+- **Project Health Agent specialist**: org-wide project health and delivery risk analysis (read-only)
 
 All GitHub access is **scoped to the org** `swarmhq-demo`.
+
+### Demo scenario
+
+The system's core differentiation is visible when you ask a status question like "How is the auth refactor going?" The PM specialist reads the project board and reports the feature as in progress. The Project Health Agent independently checks GitHub activity and finds the PR has had no commits in over a week. The Coordinator surfaces both views and explicitly calls out the disagreement — giving the executive the signal that the board does not reflect reality, without requiring them to dig into GitHub themselves.
 
 ### Setup
 

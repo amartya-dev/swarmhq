@@ -63,30 +63,7 @@
             ]
           },
           "intermediate_data": {
-            "tool_uses": [
-              {
-                "name": "read_team_context",
-                "args": {
-                  "keys": ["pm_context", "code_context"]
-                }
-              },
-              {
-                "name": "transfer_to_agent",
-                "args": {
-                  "agent_name": "pm_agent"
-                }
-              },
-              {
-                "name": "projects_list",
-                "args": {}
-              },
-              {
-                "name": "transfer_to_agent",
-                "args": {
-                  "agent_name": "swarm_hq_agent"
-                }
-              }
-            ],
+            "tool_uses": [],
             "intermediate_responses": []
           }
         }
