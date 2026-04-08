@@ -34,7 +34,8 @@ uv sync
 #### 2) GitHub MCP server binary
 
 Download the `github-mcp-server` binary and place it at:
-- `./swarm_hq_agent/bin/github-mcp-server`
+- `./swarm_hq_agent/bin/github-mcp-server` (recommended)
+- or `./bin/github-mcp-server`
 
 Make it executable:
 

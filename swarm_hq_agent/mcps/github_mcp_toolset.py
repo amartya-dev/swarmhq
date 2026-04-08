@@ -5,15 +5,45 @@ from google.adk.tools.mcp_tool import McpToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams
 from mcp import StdioServerParameters
 
-repo_root = Path(__file__).resolve().parents[2]
-default_bin = repo_root / "bin" / "github-mcp-server"
+agents_root = Path(__file__).resolve().parents[2]
+package_root = Path(__file__).resolve().parents[1]
 
-github_mcp_command = os.getenv("GITHUB_MCP_COMMAND", str(default_bin))
-if not Path(github_mcp_command).exists():
+
+def _resolve_github_mcp_command() -> str:
+    env_value = os.getenv("GITHUB_MCP_COMMAND")
+    if env_value:
+        p = Path(env_value)
+        if p.exists():
+            return str(p)
+        raise RuntimeError(
+            f"GITHUB_MCP_COMMAND is set but the file does not exist: {env_value}"
+        )
+
+    candidates = [
+        # Most common: bundled next to the agent package (what CI downloads).
+        package_root / "bin" / "github-mcp-server",
+        # Alternate: shared bin at the ADK agents root.
+        agents_root / "bin" / "github-mcp-server",
+        # Dockerfile path (if you build the provided Dockerfile directly).
+        Path("/app/bin/github-mcp-server"),
+    ]
+
+    for p in candidates:
+        if p.exists():
+            return str(p)
+
+    tried = "\n".join(f"- {p}" for p in candidates)
     raise RuntimeError(
-        f"GitHub MCP server binary not found at {github_mcp_command}. "
-        "Download it into ./bin/github-mcp-server or set GITHUB_MCP_COMMAND."
+        "GitHub MCP server binary not found.\n"
+        "Tried:\n"
+        f"{tried}\n"
+        "Fix: download the binary to `swarm_hq_agent/bin/github-mcp-server` "
+        "(recommended) or `./bin/github-mcp-server`, or set `GITHUB_MCP_COMMAND` "
+        "to an absolute path."
     )
+
+
+github_mcp_command = _resolve_github_mcp_command()
 
 # Auth for local server is passed via environment.
 # `github-mcp-server` expects GITHUB_PERSONAL_ACCESS_TOKEN.
@@ -46,7 +76,7 @@ def _mcp_toolset(*, args: list[str]) -> McpToolset:
                 command=github_mcp_command,
                 args=args,
                 env=server_env,
-                cwd=str(repo_root),
+                cwd=str(agents_root),
             )
         ),
     )

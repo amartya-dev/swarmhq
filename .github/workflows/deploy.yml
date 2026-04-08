@@ -89,8 +89,11 @@ jobs:
             "https://github.com/github/github-mcp-server/releases/download/${{ env.GITHUB_MCP_VERSION }}/github-mcp-server_Linux_x86_64.tar.gz" \
             -o /tmp/github-mcp-server.tar.gz
           tar -xzf /tmp/github-mcp-server.tar.gz -C /tmp github-mcp-server
+          mkdir -p bin
           mkdir -p swarm_hq_agent/bin
+          cp /tmp/github-mcp-server bin/github-mcp-server
           cp /tmp/github-mcp-server swarm_hq_agent/bin/github-mcp-server
+          chmod +x bin/github-mcp-server
           chmod +x swarm_hq_agent/bin/github-mcp-server
 
       - name: Deploy to Cloud Run
