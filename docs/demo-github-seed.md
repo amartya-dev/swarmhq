@@ -136,3 +136,46 @@ See `docs/local-testing.md` for local runs and example prompts.
 ## Optional later: add a GitHub Project (Projects v2)
 
 If/when you want richer “portfolio” demos (views, custom fields, planned vs in-progress), add a single org-level Project and put the 12 issues in it. The earlier version of this doc included a ready-made field list; ask and I’ll re-add it as a separate `docs/demo-github-project.md`.
+
+---
+
+## Project Health Agent demo scenarios
+
+These scenarios trigger the Project Health Agent’s signals and produce the PM-vs-Risk disagreement that is the core demo moment. Set them up after the base seed above.
+
+### 1) Stale PR scenario
+
+Create a pull request in `tiny-blog`:
+
+- **Title**: `Refactor auth module`
+- **Branch**: `refactor/auth-module` (create with an initial commit, then make no further commits)
+- **State**: Open
+- **Opened**: backdate by setting the branch’s last commit to 10+ days ago (force-push an empty commit with `GIT_AUTHOR_DATE` and `GIT_COMMITTER_DATE` set)
+- **Project board**: add the linked issue (“Refactor auth module”) to the board with status **In Progress**
+
+This gives the PM agent something to report as “in progress” while the Project Health Agent flags the PR as stale (no commits in 10+ days).
+
+### 2) Overloaded contributor scenario
+
+Assign **4 or more open PRs** to the same demo contributor account (e.g., `demo-contributor-1`). Use existing open PRs or create additional stub PRs against `tiny-blog`. The Project Health Agent will flag this contributor as overloaded.
+
+### 3) Board-vs-reality scenario
+
+- Open issue: **”Add rate limiting for comment submission”** (issue #12 from the base seed) — mark it **In Progress** on the project board and assign it to `demo-contributor-1`.
+- Do **not** create any commits, branches, or PRs linked to this issue.
+
+When queried, the PM agent will report the issue as in progress. The Project Health Agent will find no associated code activity and flag it as a contradiction.
+
+### 4) Scripted demo prompt
+
+Use this prompt verbatim during the demo:
+
+> “How is the auth refactor going?”
+
+**Expected behavior:**
+
+The Coordinator consults the PM agent (which reads the project board and reports the auth refactor as “in progress”) and the Project Health Agent (which checks PR activity and finds no commits for 10+ days). The Coordinator’s final response explicitly calls out the disagreement:
+
+> “The project board shows the auth refactor as in progress, but the activity data shows the PR has had no new commits for 10+ days. These views disagree.”
+
+This is the moment that demonstrates the system’s value over a plain project-board view.
