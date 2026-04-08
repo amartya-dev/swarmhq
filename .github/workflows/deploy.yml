@@ -14,25 +14,15 @@ jobs:
   # ---------------------------------------------------------------------------
   # test — runs on every PR and push to main
   # GitHub tools are stubbed (SWARMHQ_TEST_MODE=1).
-  # Uses WIF + Vertex AI — same auth path as deploy.
+  # Only needs GOOGLE_API_KEY — no GCP/WIF auth required.
   # ---------------------------------------------------------------------------
   test:
     name: Integration tests
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-      id-token: write   # required for Workload Identity Federation
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud (Workload Identity Federation)
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v5
@@ -45,9 +35,7 @@ jobs:
       - name: Run ADK eval tests (mocked GitHub tools)
         env:
           SWARMHQ_TEST_MODE: "1"
-          GOOGLE_GENAI_USE_VERTEXAI: "1"
-          GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT }}
-          GOOGLE_CLOUD_LOCATION: ${{ secrets.GCP_REGION }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           SWARMHQ_ORG_OWNER: ${{ secrets.SWARMHQ_ORG_OWNER }}
         run: uv run pytest tests/ -v
 
